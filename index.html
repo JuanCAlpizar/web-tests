@@ -20,14 +20,16 @@
             <br>
             <h2>Results</h2>
             <div id="result"> </div>
+            <div id="post-process"> </div>
         </form>
     </div>
     <script type="text/javascript">
         $(document).ready(function() {
-            $('#process_test').click(function (){
 
-                var sending_data = [{}];
-                var result_index = 0;
+            var index = 0;
+            var sending_data = [{}];
+
+            $('#process_test').click(function (){
 
                 $.ajax({
                     type: 'GET',
@@ -35,68 +37,79 @@
                     dataType: 'text'
                 }).done(function (data){
 
-                    var input_result = $.csv.toArrays(data);
-                    var limit = input_result.length;
-                    var index = 0;
-                    var param_data;
+                    var result = $.csv.toArrays(data);
 
+                    $('#process_test').val('Processing...').prop('disabled', true);
                     $('#result').html('');
                     $('#result').append('<table id="results_table" class="table table-striped"><thead><th>Website ID</th><th>First name</th><th>Last name</th><th>Card number</th><th>Order ID</th><th>Expected Status Code</th><th>Received status code</th><th>Test result</th></thead>');
-                    do{
 
-                        sending_data[index] = {
-                            website_id: input_result[index][0],
-                            password: input_result[index][1],
-                            first_name: input_result[index][2],
-                            last_name: input_result[index][3],
-                            card_number: input_result[index][4],
-                            expiry_date_month: input_result[index][5],
-                            expiry_date_year: input_result[index][6],
-                            cv2: input_result[index][7],
-                            amount: input_result[index][8],
-                            currecy_code: input_result[index][9],
-                            email_address: input_result[index][10],
-                            phone_number: input_result[index][11],
-                            address1: input_result[index][12],
-                            address2: input_result[index][13],
-                            city: input_result[index][14],
-                            province: input_result[index][15],
-                            postal_code: input_result[index][16],
-                            country_code: input_result[index][17],
-                            order_id: (new Date).getTime(),
-                            order_description: input_result[index][18],
-                            customer_id: input_result[index][19],
-                            customer_ip_address: input_result[index][20]
-                        };
+                    $('#post-process').html('<span class="processing"> <img src="asset/ajax-loader.gif"> Processing CSV Data, please wait. </span>');
+                    $.processDataRequests(result, result.length);
 
-                        param_data = $.param(sending_data[index]).replace('%0D', '');
-                        $.ajax({
-                            type: 'POST',
-                            data: param_data,
-                            url: 'sale-example.php',
-                            asynch: true
-                        }).done(function (data){
-
-                            var result = JSON.parse(data);
-                            var end_result = "";
-
-                            if (result.status_code === parseInt(input_result[result_index][21])){
-                                end_result = "PASSED";
-                                $('#results_table').append('<tr><td>' + sending_data[result_index].website_id + '</td><td>' + sending_data[result_index].first_name + '</td><td>' + sending_data[result_index].last_name + '</td><td>' + sending_data[result_index].card_number + '</td><td>' + sending_data[result_index].order_id + '</td><td>' + input_result[result_index][21] + '</td><td>' + result.status_code + '</td><td class="success"><strong>' + end_result + '</strong></td></tr>');
-                            }else{
-                                end_result = "FAILED";
-                                $('#results_table').append('<tr><td>' + sending_data[result_index].website_id + '</td><td>' + sending_data[result_index].first_name + '</td><td>' + sending_data[result_index].last_name + '</td><td>' + sending_data[result_index].card_number + '</td><td>' + sending_data[result_index].order_id + '</td><td>' + input_result[result_index][21] + '</td><td>' + result.status_code + '</td><td class="danger"><strong>' + end_result + '</strong></td></tr>');
-                            }
-
-                            result_index++;
-
-                        });
-                        index++;
-                    }while (index !== limit);
-
-                    $('#result').append('</table>');
                 });
             });
+
+            $.processDataRequests = function (input_result, limit){
+
+                var param_data;
+
+                sending_data[index] = {
+                    website_id: input_result[index][0],
+                    password: input_result[index][1],
+                    first_name: input_result[index][2],
+                    last_name: input_result[index][3],
+                    card_number: input_result[index][4],
+                    expiry_date_month: input_result[index][5],
+                    expiry_date_year: input_result[index][6],
+                    cv2: input_result[index][7],
+                    amount: input_result[index][8],
+                    currecy_code: input_result[index][9],
+                    email_address: input_result[index][10],
+                    phone_number: input_result[index][11],
+                    address1: input_result[index][12],
+                    address2: input_result[index][13],
+                    city: input_result[index][14],
+                    province: input_result[index][15],
+                    postal_code: input_result[index][16],
+                    country_code: input_result[index][17],
+                    order_id: (new Date).getTime(),
+                    order_description: input_result[index][18],
+                    customer_id: input_result[index][19],
+                    customer_ip_address: input_result[index][20]
+                };
+
+                param_data = $.param(sending_data[index]).replace('%0D', '');
+                $.ajax({
+                    type: 'POST',
+                    data: param_data,
+                    url: 'sale-example.php',
+                    asynch: true
+                }).done(function (data){
+
+                    var result = JSON.parse(data);
+                    var end_result = "";
+
+                    if (result.status_code === parseInt(input_result[index][21])){
+                        end_result = "PASSED";
+                        $('#results_table').append('<tr><td>' + sending_data[index].website_id + '</td><td>' + sending_data[index].first_name + '</td><td>' + sending_data[index].last_name + '</td><td>' + sending_data[index].card_number + '</td><td>' + sending_data[index].order_id + '</td><td>' + input_result[index][21] + '</td><td>' + result.status_code + '</td><td class="success"><strong>' + end_result + '</strong></td></tr>');
+                    }else{
+                        end_result = "FAILED";
+                        $('#results_table').append('<tr><td>' + sending_data[index].website_id + '</td><td>' + sending_data[index].first_name + '</td><td>' + sending_data[index].last_name + '</td><td>' + sending_data[index].card_number + '</td><td>' + sending_data[index].order_id + '</td><td>' + input_result[index][21] + '</td><td>' + result.status_code + '</td><td class="danger"><strong>' + end_result + '</strong></td></tr>');
+                    }
+
+                    index++;
+
+                    if (index < limit){
+                        $.processDataRequests(input_result, limit);
+                    }else{
+                        $('#result').append('</table>');
+                        $('#process_test').val('Start Tests').prop('disabled', false);
+                        $('.processing').html('<span class="glyphicon glyphicon-ok"></span>&nbsp;&nbsp;Task complete');
+                    }
+
+                });
+
+            }
         });
     </script>
 </body>
