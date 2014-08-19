@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>GW API Automated Tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="js/jquery-2.1.1.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="css/bootstrap-theme.min.css" />
+</head>
+<body>
+    <div class="container">
+
+        <h2>GW API Automated Tests</h2>
+        <form id="process">
+            <input type="button" name="process_test" id="process_test" class="btn btn-success" value="Start Tests" />
+            <br>
+            <h2>Results</h2>
+            <div id="result"> </div>
+        </form>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#process_test').click(function (){
+
+                var sending_data = [{}];
+                var result_index = 0;
+
+                $.ajax({
+                    type: 'GET',
+                    url: 'sample-input.csv',
+                    dataType: 'text'
+                }).done(function (data){
+
+                    var input_result = data.split('\n');
+                    var limit = input_result.length;
+                    var index = 0;
+                    var param_data;
+
+                    $('#result').html('');
+                    $('#result').append('<table id="results_table" class="table table-striped"><thead><th>Website ID</th><th>First name</th><th>Last name</th><th>Card number</th><th>Order ID</th><th>Expected Status Code</th><th>Received status code</th><th>Test result</th></thead>');
+                    do{
+                        var sending_data_raw = input_result[index].split(',');
+                        sending_data[index] = {
+                            website_id: sending_data_raw[0],
+                            password: sending_data_raw[1],
+                            first_name: sending_data_raw[2],
+                            last_name: sending_data_raw[3],
+                            card_number: sending_data_raw[4],
+                            expiry_date_month: sending_data_raw[5],
+                            expiry_date_year: sending_data_raw[6],
+                            cv2: sending_data_raw[7],
+                            amount: sending_data_raw[8],
+                            currecy_code: sending_data_raw[9],
+                            email_address: sending_data_raw[10],
+                            phone_number: sending_data_raw[11],
+                            address1: sending_data_raw[12],
+                            address2: sending_data_raw[13],
+                            city: sending_data_raw[14],
+                            province: sending_data_raw[15],
+                            postal_code: sending_data_raw[16],
+                            country_code: sending_data_raw[17],
+                            order_id: (new Date).getTime(),
+                            order_description: sending_data_raw[18],
+                            customer_id: sending_data_raw[19],
+                            customer_ip_address: sending_data_raw[20]
+                        };
+
+                        param_data = $.param(sending_data[index]).replace('%0D', '');
+                        $.ajax({
+                            type: 'POST',
+                            data: param_data,
+                            url: 'sale-example.php',
+                            asynch: true
+                        }).done(function (data){
+
+                            var result = JSON.parse(data);
+                            var end_result = "";
+
+                            if (result.status_code === parseInt(sending_data_raw[21])){
+                                end_result = "PASSED";
+                                $('#results_table').append('<tr><td>' + sending_data[result_index].website_id + '</td><td>' + sending_data[result_index].first_name + '</td><td>' + sending_data[result_index].last_name + '</td><td>' + sending_data[result_index].card_number + '</td><td>' + sending_data[result_index].order_id + '</td><td>' + sending_data_raw[21] + '</td><td>' + result.status_code + '</td><td class="success"><strong>' + end_result + '</strong></td></tr>');
+                            }else{
+                                end_result = "FAILED";
+                                $('#results_table').append('<tr><td>' + sending_data[result_index].website_id + '</td><td>' + sending_data[result_index].first_name + '</td><td>' + sending_data[result_index].last_name + '</td><td>' + sending_data[result_index].card_number + '</td><td>' + sending_data[result_index].order_id + '</td><td>' + sending_data_raw[21] + '</td><td>' + result.status_code + '</td><td class="danger"><strong>' + end_result + '</strong></td></tr>');
+                            }
+
+                            result_index++;
+
+                        });
+                        index++;
+                    }while (index !== limit);
+
+                    $('#result').append('</table>');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
